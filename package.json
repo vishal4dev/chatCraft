@@ -1,0 +1,32 @@
+{
+    "name": "neuroVerse",
+    "version": "1.0.0",
+    "description": "Enhanced Azure AI Chatbot with multiple modes and personalities",
+    "main": "app.js",
+    "scripts": {
+      "start": "node app.js",
+      "dev": "nodemon app.js"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "cors": "^2.8.5",
+      "openai": "^4.20.1",
+      "dotenv": "^16.3.1"
+    },
+    "devDependencies": {
+      "nodemon": "^3.0.1"
+    },
+    "engines": {
+      "node": ">=16.0.0"
+    },
+    "keywords": [
+      "azure",
+      "openai",
+      "chatbot",
+      "ai",
+      "express",
+      "nodejs"
+    ],
+    "author": "vishal4dev",
+    "license": "MIT"
+  }

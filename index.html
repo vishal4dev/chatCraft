@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Azure AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+      body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+        .app-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 85vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 32px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 700;
+            position: relative;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-btn {
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .settings-panel {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .settings-panel.active {
+            display: grid;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting-label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+            letter-spacing: 0.3px;
+        }
+
+        .setting-select {
+            padding: 12px 16px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            font-size: 0.95em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .setting-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .mode-description {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 6px;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .status-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 32px;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .current-mode {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .personality-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            animation: fadeIn 0.4s ease-out;
+            line-height: 1.5;
+            font-size: 0.95em;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+            border-bottom-right-radius: 6px;
+        }
+
+        .bot-message {
+            background: white;
+            color: #2c3e50;
+            align-self: flex-start;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom-left-radius: 6px;
+            position: relative;
+        }
+
+        .mode-indicator {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.7em;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 20px;
+            align-self: flex-start;
+            max-width: 80px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .typing-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .chat-input {
+            padding: 24px 32px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 16px 24px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 50px;
+            outline: none;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            background: white;
+            font-weight: 500;
+        }
+
+        #messageInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .send-btn {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .clear-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            margin: 40px 0;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { 
+                transform: translateY(0); 
+                opacity: 1; 
+            }
+            30% { 
+                transform: translateY(-12px); 
+                opacity: 0.7; 
+            }
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+
+        @media (max-width: 1024px) {
+            .app-container {
+                max-width: 900px;
+                height: 90vh;
+            }
+            
+            .settings-panel {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                width: 95%;
+                height: 95vh;
+                border-radius: 16px;
+            }
+            
+            .chat-header {
+                padding: 16px 24px;
+                font-size: 1.1em;
+            }
+            
+            .settings-btn {
+                right: 16px;
+                padding: 10px 12px;
+            }
+            
+            .chat-messages {
+                padding: 20px;
+                gap: 16px;
+            }
+            
+            .message {
+                max-width: 85%;
+                padding: 14px 16px;
+            }
+            
+            .chat-input {
+                padding: 20px 24px;
+            }
+            
+            .input-group {
+                gap: 12px;
+            }
+            
+            #messageInput {
+                padding: 14px 20px;
+            }
+            
+            .send-btn {
+                padding: 14px 24px;
+            }
+            
+            .clear-btn {
+                padding: 10px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .app-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 12px;
+            }
+            
+            .settings-panel {
+                padding: 20px;
+            }
+            
+            .chat-messages {
+                padding: 16px;
+            }
+            
+            .chat-input {
+                padding: 16px 20px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            #messageInput {
+                width: 100%;
+            }
+            
+            .send-btn, .clear-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="chat-header">
+            🤖 NeuroVerse 🤖
+            <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+        </div>
+        
+        <div class="settings-panel" id="settingsPanel">
+            <div class="setting-group">
+                <label class="setting-label">Chat Mode:</label>
+                <select class="setting-select" id="modeSelect" onchange="updateMode()">
+                    <option value="general">General Chat</option>
+                    <option value="story">Story Mode</option>
+                    <option value="learning">Learning Mode</option>
+                    <option value="interview">Interview Mode</option>
+                    <option value="debate">Debate Mode</option>
+                </select>
+                <div class="mode-description" id="modeDescription">
+                    General conversation and assistance
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Personality:</label>
+                <select class="setting-select" id="personalitySelect" onchange="updatePersonality()">
+                    <option value="neutral">Neutral</option>
+                    <option value="humorous">Humorous</option>
+                    <option value="stoic">Stoic</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="professional">Professional</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <span class="current-mode" id="currentMode">General Chat</span>
+            <span class="personality-badge" id="personalityBadge">Neutral</span>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                Welcome! Choose a mode and personality above to get started.
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-group">
+                <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
+                <button class="send-btn" id="sendButton" onclick="sendMessage()">Send</button>
+                <button class="clear-btn" onclick="clearChat()">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Backend URL
+        const BACKEND_URL = 'http://localhost:5000';
+        
+        // Global variables
+        let currentMode = 'general';
+        let currentPersonality = 'neutral';
+        let settingsOpen = false;
+        
+        // DOM elements
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const modeSelect = document.getElementById('modeSelect');
+        const personalitySelect = document.getElementById('personalitySelect');
+        const modeDescription = document.getElementById('modeDescription');
+        const currentModeDisplay = document.getElementById('currentMode');
+        const personalityBadge = document.getElementById('personalityBadge');
+
+        // Mode descriptions
+        const modeDescriptions = {
+            general: "General conversation and assistance",
+            story: "Creative storytelling and narrative development",
+            learning: "Educational tutoring and concept explanation",
+            interview: "Job interview practice and preparation",
+            debate: "Structured debates and argument development"
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPreferences();
+            addWelcomeMessage();
+            messageInput.focus();
+        });
+
+        function toggleSettings() {
+            settingsOpen = !settingsOpen;
+            settingsPanel.classList.toggle('active', settingsOpen);
+        }
+
+        function updateMode() {
+            currentMode = modeSelect.value;
+            modeDescription.textContent = modeDescriptions[currentMode];
+            updateStatusBar();
+            savePreferences();
+            addModeChangeMessage();
+        }
+
+        function updatePersonality() {
+            currentPersonality = personalitySelect.value;
+            updateStatusBar();
+            savePreferences();
+            addPersonalityChangeMessage();
+        }
+
+        function updateStatusBar() {
+            const modeNames = {
+                general: "General Chat",
+                story: "Story Mode",
+                learning: "Learning Mode",
+                interview: "Interview Mode",
+                debate: "Debate Mode"
+            };
+            
+            const personalityNames = {
+                neutral: "Neutral",
+                humorous: "Humorous",
+                stoic: "Stoic",
+                friendly: "Friendly",
+                professional: "Professional"
+            };
+            
+            currentModeDisplay.textContent = modeNames[currentMode];
+            personalityBadge.textContent = personalityNames[currentPersonality];
+        }
+
+        function addWelcomeMessage() {
+            const welcomeTexts = {
+                general: "Hello! I'm your AI assistant. How can I help you today?",
+                story: "Welcome to Story Mode! Let's create an amazing story together. What kind of story would you like to explore?",
+                learning: "Welcome to Learning Mode! I'm here to help you learn. What subject or topic would you like to explore?",
+                interview: "Welcome to Interview Mode! Let's practice for your interview. What position are you preparing for?",
+                debate: "Welcome to Debate Mode! Let's engage in a constructive debate. What topic would you like to discuss?"
+            };
+            
+            setTimeout(() => {
+                addMessage(welcomeTexts[currentMode], false);
+            }, 500);
+        }
+
+        function addModeChangeMessage() {
+            const modeTexts = {
+                general: "Switched to General Chat mode. How can I assist you?",
+                story: "Now in Story Mode! Let's create something amazing together.",
+                learning: "Learning Mode activated! What would you like to learn about?",
+                interview: "Interview Mode ready! Let's practice for your big day.",
+                debate: "Debate Mode engaged! Ready for some intellectual sparring?"
+            };
+            
+            addMessage(modeTexts[currentMode], false);
+        }
+
+        function addPersonalityChangeMessage() {
+            const personalityTexts = {
+                neutral: "Personality set to neutral.",
+                humorous: "Personality set to humorous - let's have some fun! 😄",
+                stoic: "Personality set to stoic - wisdom and tranquility await.",
+                friendly: "Personality set to friendly - excited to chat with you! 🌟",
+                professional: "Personality set to professional - ready for business."
+            };
+            
+            addMessage(personalityTexts[currentPersonality], false);
+        }
+
+        function addMessage(content, isUser = false, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            if (isError) {
+                messageDiv.className += ' error-message';
+            }
+            messageDiv.textContent = content;
+            
+            // Add mode indicator for bot messages
+            if (!isUser && !isError) {
+                const modeIndicator = document.createElement('div');
+                modeIndicator.className = 'mode-indicator';
+                modeIndicator.textContent = currentMode.charAt(0).toUpperCase();
+                messageDiv.appendChild(modeIndicator);
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, true);
+            messageInput.value = '';
+            sendButton.disabled = true;
+            showTypingIndicator();
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        mode: currentMode,
+                        personality: currentPersonality
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                hideTypingIndicator();
+                
+                if (data.response) {
+                    addMessage(data.response);
+                } else {
+                    addMessage('Sorry, I received an unexpected response format.', false, true);
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                console.error('Error:', error);
+                addMessage('Sorry, I\'m having trouble connecting to the server. Please try again.', false, true);
+            } finally {
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        async function clearChat() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/clear`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    chatMessages.innerHTML = '';
+                    addWelcomeMessage();
+                }
+            } catch (error) {
+                console.error('Error clearing chat:', error);
+            }
+        }
+
+        function savePreferences() {
+            localStorage.setItem('chatMode', currentMode);
+            localStorage.setItem('chatPersonality', currentPersonality);
+        }
+
+        function loadPreferences() {
+            const savedMode = localStorage.getItem('chatMode');
+            const savedPersonality = localStorage.getItem('chatPersonality');
+            
+            if (savedMode) {
+                currentMode = savedMode;
+                modeSelect.value = currentMode;
+                modeDescription.textContent = modeDescriptions[currentMode];
+            }
+            
+            if (savedPersonality) {
+                currentPersonality = savedPersonality;
+                personalitySelect.value = currentPersonality;
+            }
+            
+            updateStatusBar();
+        }
+
+        // Event listeners
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendButton.disabled) {
+                sendMessage();
+            }
+        });
+
+        // Close settings when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!settingsPanel.contains(e.target) && !e.target.classList.contains('settings-btn')) {
+                if (settingsOpen) {
+                    toggleSettings();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
